@@ -116,25 +116,6 @@ void listar_autores_arvore_por_letra(NoArvore* raiz, char letra) {
     }
 }
 
-void buscar_por_area(TabelaEmendas* tab, const char* uf, const char* municipio) {
-    double total = 0;
-    int cont = 0;
-    
-    printf("\n--- Emendas encontradas em %s / %s ---\n", municipio, uf);
-    for(int i = 0; i < tab->tamanho; i++) {
-        if(strcmp(tab->dados[i].uf, uf) == 0 && strcmp(tab->dados[i].municipio, municipio) == 0) {
-            printf("Autor: %s | Valor Empenhado: R$ %.2f\n", tab->dados[i].autor, tab->dados[i].valor_empenhado);
-            total += tab->dados[i].valor_empenhado;
-            cont++;
-        }
-    }
-    
-    if(cont == 0) {
-        printf("Nenhuma emenda encontrada para esta area.\n");
-    } else {
-        printf("-> %d emendas listadas. TOTAL EMPENHADO: R$ %.2f\n", cont, total);
-    }
-}
 
 void liberar_arvore(NoArvore* raiz) {
     if (raiz != NULL) {
@@ -237,11 +218,7 @@ void carregar_dados(const char* nome_arquivo, TabelaEmendas* tab, NoArvore** rai
         char* cod_autor = proximo_campo(&linha_ptr);
         char* autor = proximo_campo(&linha_ptr);
         char* num_emenda = proximo_campo(&linha_ptr);
-        char* localidade = proximo_campo(&linha_ptr); 
-        char* cod_mun = proximo_campo(&linha_ptr);
-        char* municipio = proximo_campo(&linha_ptr); 
-        char* cod_uf = proximo_campo(&linha_ptr);
-        char* uf = proximo_campo(&linha_ptr);       
+        char* localidade = proximo_campo(&linha_ptr);      
         char* regiao = proximo_campo(&linha_ptr);
         char* cod_funcao = proximo_campo(&linha_ptr);
         char* funcao = proximo_campo(&linha_ptr);
@@ -257,8 +234,6 @@ void carregar_dados(const char* nome_arquivo, TabelaEmendas* tab, NoArvore** rai
         if (tipo) { strcpy(e.tipo_emenda, tipo); limpar_aspas(e.tipo_emenda); }
         if (autor) { strcpy(e.autor, autor); limpar_aspas(e.autor); }
         if (localidade) { strcpy(e.localidade, localidade); limpar_aspas(e.localidade); }
-        if (municipio) { strcpy(e.municipio, municipio); limpar_aspas(e.municipio); } 
-        if (uf) { strcpy(e.uf, uf); limpar_aspas(e.uf); } 
         if (funcao) { strcpy(e.funcao, funcao); limpar_aspas(e.funcao); }
         
         e.valor_empenhado = converter_moeda_br(valor_empenhado);
@@ -275,7 +250,7 @@ void carregar_dados(const char* nome_arquivo, TabelaEmendas* tab, NoArvore** rai
 }
 
 // ============================================================================
-// FUNÇÕES DOS CONVÊNIOS (NOVO BLOCO)
+// FUNÇÕES DOS CONVÊNIOS 
 // ============================================================================
 
 void inicializar_tabela_convenios(TabelaConvenios *tab, int capacidade_inicial) {

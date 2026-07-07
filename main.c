@@ -28,9 +28,8 @@ int main() {
         printf("==========================================\n");
         printf("1. Consultar emendas por Autor\n");
         printf("2. Listar Top 10 Maiores Emendas\n");
-        printf("3. Consultar emendas por Area (Estado e Cidade)\n");
-        printf("4. Consultar emendas de Convenios (por Convenente)\n"); 
-        printf("5. Consultar Convenios por Funcao e Convenente\n"); // <-- ADICIONE NO MENU
+        printf("3. Consultar emendas de Convenios (por Convenente)\n"); 
+        printf("4. Consultar Convenios por Funcao e Convenente\n"); // <-- ADICIONE NO MENU
         printf("0. Sair\n");
         printf("Escolha uma opcao: ");
         
@@ -53,7 +52,7 @@ int main() {
                 printf("--------------------------------------------\n\n");
                 
                 char autor_busca[MAX_STR];
-                printf("Agora, digite o NOME EXATO do Autor na lista (ou 0 para cancelar): ");
+                printf("Agora, digite o NOME do Autor na lista (ou 0 para cancelar): ");
                 fgets(autor_busca, MAX_STR, stdin);
                 autor_busca[strcspn(autor_busca, "\n")] = 0; 
                 
@@ -77,23 +76,6 @@ int main() {
                 break;
             }
             case 3: {
-                char uf_busca[MAX_STR];
-                char mun_busca[MAX_STR];
-
-                printf("\nDigite o Estado (ex: MINAS GERAIS ou ACRE): ");
-                fgets(uf_busca, MAX_STR, stdin);
-                uf_busca[strcspn(uf_busca, "\n")] = 0;
-                for(int i = 0; uf_busca[i] != '\0'; i++) uf_busca[i] = toupper((unsigned char)uf_busca[i]);
-
-                printf("Digite o nome da Cidade: ");
-                fgets(mun_busca, MAX_STR, stdin);
-                mun_busca[strcspn(mun_busca, "\n")] = 0;
-                for(int i = 0; mun_busca[i] != '\0'; i++) mun_busca[i] = toupper((unsigned char)mun_busca[i]);
-
-                buscar_por_area(&tabela, uf_busca, mun_busca);
-                break;
-            }
-            case 4: {
                 char termo[MAX_STR];
                 printf("\nDigite o nome (ou parte do nome) do Convenente (ex: PREFEITURA, HOSPITAL): ");
                 fgets(termo, MAX_STR, stdin);
@@ -107,12 +89,12 @@ int main() {
                 buscar_convenio_por_convenente(&tab_convenios, termo);
                 break;
             }
-            case 5: {
+            case 4: {
                 char funcao_busca[MAX_STR];
                 char conv_busca[MAX_STR];
 
                 // Para a função, respeitamos letras maiúsculas/minúsculas do CSV
-                printf("\nDigite a Funcao exata (ex: Saude, Cultura, Educacao): ");
+                printf("\nDigite a Funcao (ex: Saude, Cultura, Educacao): ");
                 fgets(funcao_busca, MAX_STR, stdin);
                 funcao_busca[strcspn(funcao_busca, "\n")] = 0;
 

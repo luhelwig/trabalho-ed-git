@@ -13,9 +13,7 @@ typedef struct {
     int ano;
     char tipo_emenda[MAX_STR];
     char autor[MAX_STR];
-    char localidade[MAX_STR];
-    char municipio[MAX_STR]; 
-    char uf[MAX_STR];        
+    char localidade[MAX_STR];       
     char funcao[MAX_STR];
     double valor_empenhado;
     double valor_liquidado;
@@ -75,7 +73,6 @@ NoArvore* criar_no_arvore(const char* chave, int indice);
 NoArvore* inserir_arvore(NoArvore* raiz, const char* chave, int indice_vetor);
 void buscar_autor_arvore(NoArvore* raiz, const char* autor_buscado, TabelaEmendas* tab);
 void listar_autores_arvore_por_letra(NoArvore* raiz, char letra); 
-void buscar_por_area(TabelaEmendas* tab, const char* uf, const char* municipio); 
 void liberar_arvore(NoArvore* raiz);
 
 // Ordenação
@@ -88,7 +85,7 @@ char* proximo_campo(char** linha_ptr);
 void limpar_aspas(char* str);
 void carregar_dados(const char* nome_arquivo, TabelaEmendas* tab, NoArvore** raiz_autores);
 
-// Funções dos Convenios (NOVO)
+// Funções dos Convenios 
 void inicializar_tabela_convenios(TabelaConvenios *tab, int capacidade_inicial);
 void adicionar_convenio(TabelaConvenios *tab, Convenio c);
 void liberar_tabela_convenios(TabelaConvenios *tab);
