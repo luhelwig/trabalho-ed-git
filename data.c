@@ -1,0 +1,370 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "data.h"
+
+// ============================================================================
+// FUNÇÕES UTILITÁRIAS E MANIPULAÇÃO DO VETOR DINÂMICO
+// ============================================================================
+
+double converter_moeda_br(const char* str_valor) {
+    if (!str_valor || strlen(str_valor) == 0) return 0.0;
+    char temp[MAX_STR]; // Aumentado para suportar strings imensas
+    int j = 0;
+    for (int i = 0; str_valor[i] != '\0' && str_valor[i] != '\n' && str_valor[i] != '\r'; i++) {
+        if (str_valor[i] == '.' || str_valor[i] == '"') continue; 
+        if (str_valor[i] == ',') temp[j++] = '.';
+        else if (j < MAX_STR - 1) temp[j++] = str_valor[i]; // Trava de segurança
+    }
+    temp[j] = '\0';
+    return atof(temp);
+}
+
+void inicializar_tabela(TabelaEmendas *tab, int capacidade_inicial) {
+    tab->capacidade = capacidade_inicial;
+    tab->tamanho = 0;
+    tab->dados = (Emenda*) malloc(capacidade_inicial * sizeof(Emenda));
+}
+
+void adicionar_emenda(TabelaEmendas *tab, Emenda nova_emenda) {
+    if (tab->tamanho == tab->capacidade) {
+        tab->capacidade *= 2;
+        tab->dados = (Emenda*) realloc(tab->dados, tab->capacidade * sizeof(Emenda));
+    }
+    tab->dados[tab->tamanho] = nova_emenda;
+    tab->tamanho++;
+}
+
+void liberar_tabela(TabelaEmendas *tab) {
+    if (tab->dados != NULL) {
+        free(tab->dados);
+        tab->dados = NULL;
+    }
+    tab->tamanho = 0;
+    tab->capacidade = 0;
+}
+
+// ============================================================================
+// ÁRVORE BINÁRIA DE BUSCA (ÍNDICE) E BUSCAS SEQUENCIAIS
+// ============================================================================
+
+NoLista* criar_no_lista(int indice) {
+    NoLista* novo = (NoLista*) malloc(sizeof(NoLista));
+    novo->indice_vetor = indice;
+    novo->prox = NULL;
+    return novo;
+}
+
+NoArvore* criar_no_arvore(const char* chave, int indice) {
+    NoArvore* novo = (NoArvore*) malloc(sizeof(NoArvore));
+    strcpy(novo->chave, chave);
+    novo->indices = criar_no_lista(indice);
+    novo->esq = NULL;
+    novo->dir = NULL;
+    return novo;
+}
+
+NoArvore* inserir_arvore(NoArvore* raiz, const char* chave, int indice_vetor) {
+    if (raiz == NULL) return criar_no_arvore(chave, indice_vetor);
+    
+    int cmp = strcmp(chave, raiz->chave);
+    if (cmp == 0) {
+        NoLista* atual = raiz->indices;
+        while (atual->prox != NULL) atual = atual->prox;
+        atual->prox = criar_no_lista(indice_vetor);
+    } else if (cmp < 0) {
+        raiz->esq = inserir_arvore(raiz->esq, chave, indice_vetor);
+    } else {
+        raiz->dir = inserir_arvore(raiz->dir, chave, indice_vetor);
+    }
+    return raiz;
+}
+
+void buscar_autor_arvore(NoArvore* raiz, const char* autor_buscado, TabelaEmendas* tab) {
+    if (raiz == NULL) {
+        printf("Nenhuma emenda encontrada para o autor: %s\n", autor_buscado);
+        return;
+    }
+    
+    int cmp = strcmp(autor_buscado, raiz->chave);
+    if (cmp == 0) {
+        printf("\n--- Emendas encontradas para: %s ---\n", autor_buscado);
+        NoLista* atual = raiz->indices;
+        double total_empenhado = 0;
+        
+        while (atual != NULL) {
+            Emenda e = tab->dados[atual->indice_vetor];
+            printf("Localidade: %s | Valor Empenhado: R$ %.2f\n", e.localidade, e.valor_empenhado);
+            total_empenhado += e.valor_empenhado;
+            atual = atual->prox;
+        }
+        printf("-> TOTAL EMPENHADO: R$ %.2f\n", total_empenhado);
+    } else if (cmp < 0) {
+        buscar_autor_arvore(raiz->esq, autor_buscado, tab);
+    } else {
+        buscar_autor_arvore(raiz->dir, autor_buscado, tab);
+    }
+}
+
+void listar_autores_arvore_por_letra(NoArvore* raiz, char letra) {
+    if (raiz != NULL) {
+        listar_autores_arvore_por_letra(raiz->esq, letra); 
+        if (raiz->chave[0] == letra) {
+            printf("- %s\n", raiz->chave);    
+        }
+        listar_autores_arvore_por_letra(raiz->dir, letra); 
+    }
+}
+
+void buscar_por_area(TabelaEmendas* tab, const char* uf, const char* municipio) {
+    double total = 0;
+    int cont = 0;
+    
+    printf("\n--- Emendas encontradas em %s / %s ---\n", municipio, uf);
+    for(int i = 0; i < tab->tamanho; i++) {
+        if(strcmp(tab->dados[i].uf, uf) == 0 && strcmp(tab->dados[i].municipio, municipio) == 0) {
+            printf("Autor: %s | Valor Empenhado: R$ %.2f\n", tab->dados[i].autor, tab->dados[i].valor_empenhado);
+            total += tab->dados[i].valor_empenhado;
+            cont++;
+        }
+    }
+    
+    if(cont == 0) {
+        printf("Nenhuma emenda encontrada para esta area.\n");
+    } else {
+        printf("-> %d emendas listadas. TOTAL EMPENHADO: R$ %.2f\n", cont, total);
+    }
+}
+
+void liberar_arvore(NoArvore* raiz) {
+    if (raiz != NULL) {
+        liberar_arvore(raiz->esq);
+        liberar_arvore(raiz->dir);
+        
+        NoLista* atual = raiz->indices;
+        while (atual != NULL) {
+            NoLista* temp = atual;
+            atual = atual->prox;
+            free(temp);
+        }
+        free(raiz);
+    }
+}
+
+// ============================================================================
+// ORDENAÇÃO (QUICKSORT)
+// ============================================================================
+
+void trocar_emendas(Emenda* a, Emenda* b) {
+    Emenda temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int particionar(TabelaEmendas* tab, int baixo, int alto) {
+    double pivo = tab->dados[alto].valor_empenhado;
+    int i = (baixo - 1);
+    
+    for (int j = baixo; j <= alto - 1; j++) {
+        if (tab->dados[j].valor_empenhado >= pivo) {
+            i++;
+            trocar_emendas(&tab->dados[i], &tab->dados[j]);
+        }
+    }
+    trocar_emendas(&tab->dados[i + 1], &tab->dados[alto]);
+    return (i + 1);
+}
+
+void quicksort(TabelaEmendas* tab, int baixo, int alto) {
+    if (baixo < alto) {
+        int pi = particionar(tab, baixo, alto);
+        quicksort(tab, baixo, pi - 1);
+        quicksort(tab, pi + 1, alto);
+    }
+}
+
+// ============================================================================
+// LEITURA DO ARQUIVO CSV
+// ============================================================================
+
+char* proximo_campo(char** linha_ptr) {
+    if (*linha_ptr == NULL || **linha_ptr == '\0') return NULL;
+    char* inicio = *linha_ptr;
+    char* atual = inicio;
+    int dentro_aspas = 0;
+
+    while (*atual != '\0') {
+        if (*atual == '"') {
+            dentro_aspas = !dentro_aspas; // Liga/desliga a leitura de aspas
+        } else if (*atual == ';' && !dentro_aspas) {
+            *atual = '\0';
+            *linha_ptr = atual + 1;
+            return inicio;
+        }
+        atual++;
+    }
+    *linha_ptr = NULL;
+    return inicio;
+}
+
+void limpar_aspas(char* str) {
+    int i = 0, j = 0;
+    while (str[i] != '\0') {
+        if (str[i] != '"') str[j++] = str[i];
+        i++;
+    }
+    str[j] = '\0';
+}
+
+void carregar_dados(const char* nome_arquivo, TabelaEmendas* tab, NoArvore** raiz_autores) {
+    FILE* arquivo = fopen(nome_arquivo, "r");
+    if (!arquivo) {
+        printf("Erro ao abrir o arquivo %s!\n", nome_arquivo);
+        return;
+    }
+
+    char linha[MAX_LINHA];
+    if (!fgets(linha, MAX_LINHA, arquivo)) return; 
+
+    int cont = 0;
+    while (fgets(linha, MAX_LINHA, arquivo)) {
+        char* linha_ptr = linha;
+        Emenda e;
+        
+        char* codigo = proximo_campo(&linha_ptr);
+        char* ano = proximo_campo(&linha_ptr);
+        char* tipo = proximo_campo(&linha_ptr);
+        char* cod_autor = proximo_campo(&linha_ptr);
+        char* autor = proximo_campo(&linha_ptr);
+        char* num_emenda = proximo_campo(&linha_ptr);
+        char* localidade = proximo_campo(&linha_ptr); 
+        char* cod_mun = proximo_campo(&linha_ptr);
+        char* municipio = proximo_campo(&linha_ptr); 
+        char* cod_uf = proximo_campo(&linha_ptr);
+        char* uf = proximo_campo(&linha_ptr);       
+        char* regiao = proximo_campo(&linha_ptr);
+        char* cod_funcao = proximo_campo(&linha_ptr);
+        char* funcao = proximo_campo(&linha_ptr);
+        
+        for(int i=0; i<8; i++) proximo_campo(&linha_ptr);
+        
+        char* valor_empenhado = proximo_campo(&linha_ptr);
+        char* valor_liquidado = proximo_campo(&linha_ptr);
+        char* valor_pago = proximo_campo(&linha_ptr);
+
+        if (codigo) { strcpy(e.codigo_emenda, codigo); limpar_aspas(e.codigo_emenda); }
+        if (ano) e.ano = atoi(ano);
+        if (tipo) { strcpy(e.tipo_emenda, tipo); limpar_aspas(e.tipo_emenda); }
+        if (autor) { strcpy(e.autor, autor); limpar_aspas(e.autor); }
+        if (localidade) { strcpy(e.localidade, localidade); limpar_aspas(e.localidade); }
+        if (municipio) { strcpy(e.municipio, municipio); limpar_aspas(e.municipio); } 
+        if (uf) { strcpy(e.uf, uf); limpar_aspas(e.uf); } 
+        if (funcao) { strcpy(e.funcao, funcao); limpar_aspas(e.funcao); }
+        
+        e.valor_empenhado = converter_moeda_br(valor_empenhado);
+        e.valor_liquidado = converter_moeda_br(valor_liquidado);
+        e.valor_pago = converter_moeda_br(valor_pago);
+
+        adicionar_emenda(tab, e);
+        *raiz_autores = inserir_arvore(*raiz_autores, e.autor, tab->tamanho - 1);
+        
+        cont++;
+    }
+    fclose(arquivo);
+    printf("Carregamento concluido! %d registros lidos.\n", cont);
+}
+
+// ============================================================================
+// FUNÇÕES DOS CONVÊNIOS (NOVO BLOCO)
+// ============================================================================
+
+void inicializar_tabela_convenios(TabelaConvenios *tab, int capacidade_inicial) {
+    tab->capacidade = capacidade_inicial;
+    tab->tamanho = 0;
+    tab->dados = (Convenio*) malloc(capacidade_inicial * sizeof(Convenio));
+}
+
+void adicionar_convenio(TabelaConvenios *tab, Convenio c) {
+    if (tab->tamanho == tab->capacidade) {
+        tab->capacidade *= 2;
+        tab->dados = (Convenio*) realloc(tab->dados, tab->capacidade * sizeof(Convenio));
+    }
+    tab->dados[tab->tamanho] = c;
+    tab->tamanho++;
+}
+
+void liberar_tabela_convenios(TabelaConvenios *tab) {
+    if (tab->dados != NULL) {
+        free(tab->dados);
+        tab->dados = NULL;
+    }
+    tab->tamanho = 0;
+    tab->capacidade = 0;
+}
+
+void carregar_convenios(const char* nome_arquivo, TabelaConvenios* tab) {
+    FILE* arquivo = fopen(nome_arquivo, "r");
+    if (!arquivo) {
+        printf("Erro ao abrir o arquivo %s!\n", nome_arquivo);
+        return;
+    }
+
+    char linha[MAX_LINHA];
+    if (!fgets(linha, MAX_LINHA, arquivo)) return; 
+
+    int cont = 0;
+    while (fgets(linha, MAX_LINHA, arquivo)) {
+        char* linha_ptr = linha;
+        Convenio c;
+        
+        char* codigo = proximo_campo(&linha_ptr);
+        proximo_campo(&linha_ptr); 
+        char* funcao = proximo_campo(&linha_ptr);
+        proximo_campo(&linha_ptr); 
+        proximo_campo(&linha_ptr); 
+        char* localidade = proximo_campo(&linha_ptr);
+        proximo_campo(&linha_ptr); 
+        proximo_campo(&linha_ptr); 
+        char* convenente = proximo_campo(&linha_ptr);
+        char* objeto = proximo_campo(&linha_ptr);
+        proximo_campo(&linha_ptr); 
+        char* valor = proximo_campo(&linha_ptr);
+
+        if (codigo) { strcpy(c.codigo_emenda, codigo); limpar_aspas(c.codigo_emenda); }
+        if (funcao) { strcpy(c.funcao, funcao); limpar_aspas(c.funcao); }
+        if (localidade) { strcpy(c.localidade, localidade); limpar_aspas(c.localidade); }
+        if (convenente) { strcpy(c.convenente, convenente); limpar_aspas(c.convenente); }
+        if (objeto) { strcpy(c.objeto, objeto); limpar_aspas(c.objeto); }
+        
+        c.valor_convenio = converter_moeda_br(valor);
+
+        adicionar_convenio(tab, c);
+        cont++;
+    }
+    fclose(arquivo);
+    printf("Carregamento de convenios concluido! %d registros lidos.\n", cont);
+}
+
+void buscar_convenio_por_convenente(TabelaConvenios* tab, const char* termo) {
+    double total = 0;
+    int cont = 0;
+    
+    printf("\n--- Convenios encontrados contendo o termo: '%s' ---\n", termo);
+    for(int i = 0; i < tab->tamanho; i++) {
+        // A função strstr verifica se a palavra digitada existe dentro do nome do Convenente
+        if(strstr(tab->dados[i].convenente, termo) != NULL) {
+            printf("Convenente: %s\n", tab->dados[i].convenente);
+            printf("Objeto: %s\n", tab->dados[i].objeto);
+            printf("Localidade: %s | Valor: R$ %.2f\n", tab->dados[i].localidade, tab->dados[i].valor_convenio);
+            printf("--------------------------------------------------\n");
+            total += tab->dados[i].valor_convenio;
+            cont++;
+        }
+    }
+    
+    if(cont == 0) {
+        printf("Nenhum convenio encontrado com esse termo.\n");
+    } else {
+        printf("-> %d convenios listados. TOTAL DE RECURSOS: R$ %.2f\n", cont, total);
+    }
+}
