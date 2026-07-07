@@ -29,7 +29,8 @@ int main() {
         printf("1. Consultar emendas por Autor\n");
         printf("2. Listar Top 10 Maiores Emendas\n");
         printf("3. Consultar emendas por Area (Estado e Cidade)\n");
-        printf("4. Consultar emendas de Convenios (por Convenente)\n"); // NOVO MENU
+        printf("4. Consultar emendas de Convenios (por Convenente)\n"); 
+        printf("5. Consultar Convenios por Funcao e Convenente\n"); // <-- ADICIONE NO MENU
         printf("0. Sair\n");
         printf("Escolha uma opcao: ");
         
@@ -104,6 +105,27 @@ int main() {
                 }
                 
                 buscar_convenio_por_convenente(&tab_convenios, termo);
+                break;
+            }
+            case 5: {
+                char funcao_busca[MAX_STR];
+                char conv_busca[MAX_STR];
+
+                // Para a função, respeitamos letras maiúsculas/minúsculas do CSV
+                printf("\nDigite a Funcao exata (ex: Saude, Cultura, Educacao): ");
+                fgets(funcao_busca, MAX_STR, stdin);
+                funcao_busca[strcspn(funcao_busca, "\n")] = 0;
+
+                printf("Digite o nome (ou parte) do Convenente (ex: PREFEITURA): ");
+                fgets(conv_busca, MAX_STR, stdin);
+                conv_busca[strcspn(conv_busca, "\n")] = 0;
+                
+                // Transforma convenente em maiúsculo (pois no CSV eles são MAIÚSCULOS)
+                for(int i = 0; conv_busca[i] != '\0'; i++) {
+                    conv_busca[i] = toupper((unsigned char)conv_busca[i]);
+                }
+
+                buscar_convenio_por_funcao_e_convenente(&tab_convenios, funcao_busca, conv_busca);
                 break;
             }
             case 0:

@@ -94,5 +94,6 @@ void adicionar_convenio(TabelaConvenios *tab, Convenio c);
 void liberar_tabela_convenios(TabelaConvenios *tab);
 void carregar_convenios(const char* nome_arquivo, TabelaConvenios* tab);
 void buscar_convenio_por_convenente(TabelaConvenios* tab, const char* termo);
+void buscar_convenio_por_funcao_e_convenente(TabelaConvenios* tab, const char* funcao, const char* convenente); 
 
 #endif // DATA_H

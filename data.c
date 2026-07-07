@@ -368,3 +368,28 @@ void buscar_convenio_por_convenente(TabelaConvenios* tab, const char* termo) {
         printf("-> %d convenios listados. TOTAL DE RECURSOS: R$ %.2f\n", cont, total);
     }
 }
+
+void buscar_convenio_por_funcao_e_convenente(TabelaConvenios* tab, const char* funcao, const char* convenente) {
+    double total = 0;
+    int cont = 0;
+    
+    printf("\n--- Convenios encontrados (Funcao: '%s' | Convenente: '%s') ---\n", funcao, convenente);
+    for(int i = 0; i < tab->tamanho; i++) {
+        // Verifica se o texto digitado existe dentro da funcao E dentro do convenente
+        if(strstr(tab->dados[i].funcao, funcao) != NULL && strstr(tab->dados[i].convenente, convenente) != NULL) {
+            printf("Funcao: %s\n", tab->dados[i].funcao);
+            printf("Convenente: %s\n", tab->dados[i].convenente);
+            printf("Objeto: %s\n", tab->dados[i].objeto);
+            printf("Localidade: %s | Valor: R$ %.2f\n", tab->dados[i].localidade, tab->dados[i].valor_convenio);
+            printf("--------------------------------------------------\n");
+            total += tab->dados[i].valor_convenio;
+            cont++;
+        }
+    }
+    
+    if(cont == 0) {
+        printf("Nenhum convenio encontrado com esses criterios.\n");
+    } else {
+        printf("-> %d convenios listados. TOTAL DE RECURSOS: R$ %.2f\n", cont, total);
+    }
+}
