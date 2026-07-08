@@ -2,12 +2,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "data.h"
 
 int main() {
+#ifdef _WIN32
+    // Ajusta a codepage do console do Windows para exibir corretamente
+    // acentos (ç, ã, á, etc.) vindos do CSV em Latin-1/CP1252.
+    // Em Linux/macOS o terminal ja trabalha em UTF-8/Latin-1 nativamente,
+    // entao essa chamada nao existe e nem faz falta fora do Windows.
     SetConsoleOutputCP(1252);
     SetConsoleCP(1252);
+#endif
 
     TabelaEmendas tabela;
     inicializar_tabela(&tabela, 1000);
@@ -43,7 +51,7 @@ int main() {
             case 1: {
                 char letra;
                 printf("\nDigite a PRIMEIRA LETRA do nome do Autor: ");
-                scanf("%c", &letra);
+                if (scanf("%c", &letra) != 1) { while (getchar() != '\n'); continue; }
                 getchar(); 
                 letra = toupper((unsigned char)letra); 
 
@@ -53,7 +61,7 @@ int main() {
                 
                 char autor_busca[MAX_STR];
                 printf("Agora, digite o NOME do Autor na lista (ou 0 para cancelar): ");
-                fgets(autor_busca, MAX_STR, stdin);
+                if (!fgets(autor_busca, MAX_STR, stdin)) autor_busca[0] = '\0';
                 autor_busca[strcspn(autor_busca, "\n")] = 0; 
                 
                 if (strcmp(autor_busca, "0") != 0) {
@@ -78,7 +86,7 @@ int main() {
             case 3: {
                 char termo[MAX_STR];
                 printf("\nDigite o nome (ou parte do nome) do Convenente (ex: PREFEITURA, HOSPITAL): ");
-                fgets(termo, MAX_STR, stdin);
+                if (!fgets(termo, MAX_STR, stdin)) termo[0] = '\0';
                 termo[strcspn(termo, "\n")] = 0;
                 
                 // Converte a busca para maiúsculo
@@ -95,11 +103,11 @@ int main() {
 
                 // Para a função, respeitamos letras maiúsculas/minúsculas do CSV
                 printf("\nDigite a Funcao (ex: Saude, Cultura, Educacao): ");
-                fgets(funcao_busca, MAX_STR, stdin);
+                if (!fgets(funcao_busca, MAX_STR, stdin)) funcao_busca[0] = '\0';
                 funcao_busca[strcspn(funcao_busca, "\n")] = 0;
 
                 printf("Digite o nome (ou parte) do Convenente (ex: PREFEITURA): ");
-                fgets(conv_busca, MAX_STR, stdin);
+                if (!fgets(conv_busca, MAX_STR, stdin)) conv_busca[0] = '\0';
                 conv_busca[strcspn(conv_busca, "\n")] = 0;
                 
                 // Transforma convenente em maiúsculo (pois no CSV eles são MAIÚSCULOS)
