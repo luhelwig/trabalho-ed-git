@@ -1,6 +1,8 @@
 #ifndef DATA_H
 #define DATA_H
 
+#include <stddef.h> // size_t
+
 #define MAX_LINHA 4096
 #define MAX_STR 512
 
@@ -62,6 +64,7 @@ typedef struct {
 // ============================================================================
 
 // Manipulação da Tabela Principal
+void copiar_seguro(char* dest, const char* origem, size_t tam_dest);
 double converter_moeda_br(const char* str_valor);
 void inicializar_tabela(TabelaEmendas *tab, int capacidade_inicial);
 void adicionar_emenda(TabelaEmendas *tab, Emenda nova_emenda);
